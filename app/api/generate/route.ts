@@ -10,33 +10,51 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.MERGE_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api-gateway.merge.dev/v1/responses', {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        system: GENERATE_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: body.prompt }],
+        model: 'anthropic/claude-sonnet-4-6',
+        stream: false,
+        include_routing_metadata: true,
+        input: [
+          {
+            type: 'message',
+            role: 'system',
+            content: GENERATE_SYSTEM_PROMPT,
+          },
+          {
+            type: 'message',
+            role: 'user',
+            content: body.prompt,
+          },
+        ],
       }),
     });
 
     if (!response.ok) {
       const err = await response.text();
-      return NextResponse.json({ error: `Claude API error: ${err}` }, { status: response.status });
+      return NextResponse.json({ error: `API error: ${err}` }, { status: response.status });
     }
 
     const data = await response.json();
-    const text = data.content?.[0]?.text ?? '';
+
+    // Extract text from Responses API output format
+    const outputItem = data.output?.find((o: { type: string }) => o.type === 'message');
+    const textItem = outputItem?.content?.find((c: { type: string }) => c.type === 'output_text');
+    const text = textItem?.text ?? '';
+
+    if (!text) {
+      return NextResponse.json({ error: 'Empty response from AI' }, { status: 500 });
+    }
 
     let parsed;
     try {
@@ -45,7 +63,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to parse AI response as JSON' }, { status: 500 });
     }
 
-    // Attach ids and isRegenerating flag
     const sections: MemoSection[] = (parsed.sections ?? []).map(
       (s: Omit<MemoSection, 'id' | 'isRegenerating'>) => ({
         ...s,
