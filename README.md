@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DealDraft
 
-## Getting Started
+AI-powered deal memo generator that turns natural language deal descriptions
+into structured, professional investment memos.
 
-First, run the development server:
+Built as a portfolio project demonstrating frontend engineering for AI-powered
+financial workflows — the exact problem space of [Farsight AI](https://farsight-ai.com).
+
+## Features
+
+- **Prompt → Memo:** Describe any deal and get a formatted investment memo
+- **Deal Templates:** Pre-built prompts for M&A, Series Fundraise, LBO, IPO, Market Entry
+- **Section Regeneration:** Regenerate individual sections without redoing the full memo
+- **Institutional Design:** Document rendering that mirrors real deal materials
+
+## Tech Stack
+
+- Next.js 16 (App Router) + TypeScript
+- Tailwind CSS
+- Claude API (Anthropic — claude-sonnet-4-6)
+- Deployed on Vercel
+
+## Run Locally
 
 ```bash
+git clone https://github.com/salonisaraf30/dealdraft.git
+cd dealdraft
+npm install
+echo "ANTHROPIC_API_KEY=your-key" > .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Built By
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+[Saloni Saraf](https://linkedin.com/in/salonisaraf02) — MS Computer Science (AI),
+Stevens Institute of Technology
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*This project demonstrates building interfaces for AI-generated financial content,
+handling structured AI outputs, and creating clean, production-grade React/TypeScript
+applications.*
