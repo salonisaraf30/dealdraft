@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GenerateRequest, MemoSection } from '@/lib/types';
 import { GENERATE_SYSTEM_PROMPT } from '@/lib/prompts';
 
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const body: GenerateRequest = await req.json();
@@ -28,13 +30,8 @@ export async function POST(req: NextRequest) {
         input: [
           {
             type: 'message',
-            role: 'system',
-            content: GENERATE_SYSTEM_PROMPT,
-          },
-          {
-            type: 'message',
             role: 'user',
-            content: body.prompt,
+            content: `${GENERATE_SYSTEM_PROMPT}\n\nDeal: ${body.prompt}`,
           },
         ],
       }),
@@ -47,19 +44,22 @@ export async function POST(req: NextRequest) {
 
     const data = await response.json();
 
-    // Extract text from Responses API output format
-    const outputItem = data.output?.find((o: { type: string }) => o.type === 'message');
-    const textItem = outputItem?.content?.find((c: { type: string }) => c.type === 'output_text');
-    const text = textItem?.text ?? '';
+    // Extract text — try multiple response shapes
+    const text = extractText(data);
 
     if (!text) {
+      console.error('Unrecognised response shape:', JSON.stringify(data).slice(0, 500));
       return NextResponse.json({ error: 'Empty response from AI' }, { status: 500 });
     }
 
+    // Strip any accidental markdown fences
+    const clean = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
     let parsed;
     try {
-      parsed = JSON.parse(text);
+      parsed = JSON.parse(clean);
     } catch {
+      console.error('JSON parse failed. Raw text:', clean.slice(0, 300));
       return NextResponse.json({ error: 'Failed to parse AI response as JSON' }, { status: 500 });
     }
 
@@ -82,4 +82,34 @@ export async function POST(req: NextRequest) {
     console.error('Generate error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+// Handles Anthropic, OpenAI Responses API, and plain {text} shapes
+function extractText(data: Record<string, unknown>): string {
+  // OpenAI Responses API: data.output[].content[].text
+  if (Array.isArray(data.output)) {
+    for (const item of data.output as Record<string, unknown>[]) {
+      if (Array.isArray(item.content)) {
+        for (const c of item.content as Record<string, unknown>[]) {
+          if (c.text) return c.text as string;
+        }
+      }
+      // Sometimes content is a plain string
+      if (typeof item.content === 'string') return item.content;
+    }
+  }
+  // Anthropic Messages API: data.content[].text
+  if (Array.isArray(data.content)) {
+    for (const c of data.content as Record<string, unknown>[]) {
+      if (c.text) return c.text as string;
+    }
+  }
+  // Flat text field
+  if (typeof data.text === 'string') return data.text;
+  // OpenAI Chat: choices[].message.content
+  if (Array.isArray(data.choices)) {
+    const msg = (data.choices as Record<string, unknown>[])[0]?.message as Record<string, unknown> | undefined;
+    if (typeof msg?.content === 'string') return msg.content;
+  }
+  return '';
 }

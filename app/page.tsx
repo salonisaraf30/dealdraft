@@ -108,6 +108,15 @@ export default function Home() {
           padding: '32px 24px 64px',
         }}
       >
+        {/* Tagline */}
+        <div style={{ maxWidth: '720px', margin: '0 auto 20px' }}>
+          <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+            Describe any deal in plain English and DealDraft instantly generates a structured,
+            institutional-grade investment memo — complete with financials, market analysis, and risk assessment.{' '}
+            <span style={{ color: 'var(--text-muted)' }}>Hover any section to regenerate it individually.</span>
+          </p>
+        </div>
+
         {/* Prompt panel */}
         <div style={{ maxWidth: '720px', margin: '0 auto 32px' }}>
           <PromptPanel onGenerate={handleGenerate} isLoading={isLoading} />
